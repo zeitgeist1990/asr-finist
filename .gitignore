@@ -1,0 +1,14 @@
+*.onnx
+*.pyc
+*.ipynb_checkpoints
+*.csv
+*.gz
+*.egg*
+__pycache__
+version.py
+build/*
+dist/*
+.history
+.vscode
+.venv
+.DS_Store
