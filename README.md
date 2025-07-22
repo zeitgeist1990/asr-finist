@@ -113,7 +113,7 @@ The decoder takes logprobs of phrases produced by the logprob splitter as inputs
 ![streaming_acoustic_scheme](.github/asr_pipeline.png)
 (Blank and space symbols are marked as '-' and '|' here)
 
-For a detailed exploration of our architecture, design choices, and implementation, check out our accompanying article (link will be shared shortly).
+For a detailed exploration of our architecture, design choices, and implementation, check out our accompanying [article](https://habr.com/ru/companies/tbank/articles/929850).
 
 ## 💪 Advanced usage example
 
@@ -138,7 +138,7 @@ print(new_phrases)
 Word Error Rate ([WER](https://huggingface.co/spaces/evaluate-metric/wer)) is used to evaluate the quality of automatic speech recognition systems, which can be interpreted as incorrectly recognized words percentage compared to a reference transcript.
 
 ### WER comparison with other models
-| Category | T-one (70M) | GigaAM-RNNT v2 (243M) | GigaAM-CTC v2 (242M) | Vosk-model-ru 0.54 (65M) | Vosk-model-small-streaming-ru 0.54 (20M) | Whisper large-v3 (1540M) |
+| Category | T-one (71M) | GigaAM-RNNT v2 (243M) | GigaAM-CTC v2 (242M) | Vosk-model-ru 0.54 (65M) | Vosk-model-small-streaming-ru 0.54 (20M) | Whisper large-v3 (1540M) |
 |:--|:--|:--|:--|--:|:--|:--|
 | Call-center | **8.63** | 10.22 | 10.57 | 11.28 | 15.53 | 19.39 |
 | Other telephony | **6.20** | 7.88 | 8.15 | 8.69 | 13.49 | 17.29 |
@@ -165,4 +165,5 @@ Find more details on the performance metrics calculation method [here](docs/perf
 The code and models in this repository are released under the [Apache 2.0 License](./LICENSE).
 
 ## 📚 Additional Resources
+- [T-one - an open-source streaming model for Russian telephony](https://habr.com/ru/companies/tbank/articles/929850).
 - [How to improve quality and training speed of a streaming ASR model](https://www.youtube.com/watch?v=OQD9o1MdFRE).
