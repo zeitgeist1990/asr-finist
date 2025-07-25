@@ -21,18 +21,26 @@ Originally developed by T-Software DC, this project is a practical low-latency, 
 For a quick demo, simply run service with a web interface using our pre-built Docker image. You can **transcribe audio files** or **use your microphone** for real-time streaming recognition - all right in your browser.
 *A computer with at least 4 CPU cores and 8 GB RAM is recommended for smooth performance.*
 
-1. Run the container (alternatively, you can build the image from the [Dockerfile](Dockerfile)):
-   ```bash
-   docker run -it --rm -p 8080:8080 tinkoffcreditsystems/t-one:0.1.0
-   ```
+Run the container:
+```bash
+docker run -it --rm -p 8080:8080 tinkoffcreditsystems/t-one:0.1.0
+```
 
-2. Open the website `http://localhost:8080`
+Open the website `http://localhost:8080`.
 
-   ![](.github/demo_website.png)
+![](.github/demo_website.png)
+
+Alternatively, you can build the image manually using [Dockerfile](Dockerfile) and run the container:
+```bash
+docker build -t t-one .
+docker run -it --rm -p 8080:8080 t-one
+```
 
 ## 🛠️ Installation & Usage
 
-Ensure you have [Python](https://www.python.org/downloads/) (`3.9` or higher) and [Poetry](https://python-poetry.org/docs/#installation) (`2.1` or newer is recommended) installed on your Linux, Windows, or macOS system.
+Ensure you have [Python](https://www.python.org/downloads/) (`3.9` or higher) and [Poetry](https://python-poetry.org/docs/#installation) (`2.1` or newer is recommended) installed on your Linux or macOS system.
+
+It is recommended to use a containerized environment like Docker or [Windows Subsystem for Linux (WSL)](https://www.google.com/url?sa=E&q=https%3A%2F%2Fdocs.microsoft.com%2Fen-us%2Fwindows%2Fwsl%2Finstall) on Windows as the project dependency KenLM does not have official support for Windows. While it might be possible to install it on Windows (you can remove `kenlm` from Poetry dependencies and try to build it manually via [Vcpkg](https://github.com/kpu/kenlm?tab=readme-ov-file#building-kenlm---using-vcpkg)), it is generally more complex and prone to dependency issues.
 
 ### Installing and Running the Web Service
 
