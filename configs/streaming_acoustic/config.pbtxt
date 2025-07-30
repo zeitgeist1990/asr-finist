@@ -89,3 +89,12 @@ model_warmup [
         }
     }
 ]
+
+parameters { 
+  key: "intra_op_thread_count"
+  value: { string_value: "1" }
+}
+parameters {
+  key: "inter_op_thread_count"
+  value: { string_value: "1" }
+}

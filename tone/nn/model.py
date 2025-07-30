@@ -186,7 +186,7 @@ class Tone(nn.Module):
 
         """
         state_preprocessing = torch.zeros(
-            (batch_size, self.preprocessor.state_size()),
+            (batch_size, self.preprocessor.state_size),
             device=device,
             dtype=dtype,
         )

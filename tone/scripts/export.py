@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import argparse
 import io
-import tempfile
-from pathlib import Path
-from typing import IO, Any
+from typing import IO, TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from tone.nn.model import Tone
+
+import onnx
 import torch
-import yaml
 from cloudpathlib import AnyPath
 
-from tone.nn.model import Tone
+from tone.training.model_wrapper import ToneForCTC
 
 _old_layer_norm = torch.nn.functional.layer_norm
 DUMMY_BATCH_SIZE = 5
@@ -78,21 +81,12 @@ class ModelToExport(torch.nn.Module):
 
     def __init__(
         self,
-        config: dict,
-        checkpoint_path: Path | IO,
+        path_to_pretrained: Path | str,
         chunk_duration_ms: int,
     ) -> None:
         super().__init__()
-        self._model = Tone(
-            config["feature_extraction_params"],
-            config["encoder_params"],
-            config["decoder_params"],
-        )
-        checkpoint = torch.load(checkpoint_path, map_location=torch.device("cpu"), weights_only=False)
-        self._model.load_state_dict(
-            checkpoint["state_dict"],
-            strict=True,
-        )
+        tone_ctc = ToneForCTC.from_pretrained(path_to_pretrained)
+        self._model = tone_ctc.tone
 
         self._model.eval()
         self._signal_len = chunk_duration_ms * self._model.preprocessor.sample_rate // 1000
@@ -202,40 +196,43 @@ class ModelToExport(torch.nn.Module):
 
 
 def _export_onnx(model: ModelToExport) -> bytes:
+    output_sample = model(*model.input_sample)
+
     # Patch LayerNorm: repare for ONNX export. Convert to float since tf32 is not supported.
     torch.nn.functional.layer_norm = layer_norm
 
-    with tempfile.NamedTemporaryFile(suffix=".onnx") as tmpfile:
-        model_output_path = tmpfile.name
-        torch.onnx.export(
-            model,
-            model.input_sample,
-            model_output_path,
-            input_names=["signal", "state"],
-            output_names=["logprobs", "state_next"],
-            opset_version=17,
-            dynamic_axes={
-                k: {0: "batch_size"} for k in ["signal", "state", "logprobs", "state_next"]
-            },
-        )
+    onnx_model_bytes = io.BytesIO()
+    torch.onnx.export(
+        model,
+        model.input_sample,
+        onnx_model_bytes,
+        input_names=["signal", "state"],
+        output_names=["logprobs", "state_next"],
+        opset_version=17,
+        dynamic_axes={
+            k: {0: "batch_size"} for k in ["signal", "state", "logprobs", "state_next"]
+        },
+    )
+    onnx_model_bytes.seek(0)
+    onnx_model = onnx.load(onnx_model_bytes)
+    onnx_model.graph.output[0].type.tensor_type.shape.dim[1].dim_value = output_sample[0].size(1)
+    onnx_model.graph.output[0].type.tensor_type.shape.dim[2].dim_value = output_sample[0].size(2)
+    onnx_model.graph.output[1].type.tensor_type.shape.dim[1].dim_value = output_sample[1].size(1)
 
-        return Path(model_output_path).read_bytes()
+    onnx_model_bytes = io.BytesIO()
+    onnx.save(onnx_model, onnx_model_bytes)
+
+    return onnx_model_bytes.getvalue()
 
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config",
+        "--path-to-pretrained",
         type=str,
-        required=True,
-        help="Model config",
-    )
-    parser.add_argument(
-        "--checkpoint",
-        type=str,
-        required=True,
-        help="Nemo checkpoint to export (on s3 or locally)",
+        default="t-tech/T-one",
+        help="Path to huggingface pretrained checkpoint",
     )
     parser.add_argument(
         "--chunk-duration-ms",
@@ -255,9 +252,6 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    with Path.open(args.config) as fin:
-        config = yaml.safe_load(fin)
-
-    model = ModelToExport(config, args.checkpoint, args.chunk_duration_ms)
+    model = ModelToExport(args.path_to_pretrained, args.chunk_duration_ms)
     model_bytes = _export_onnx(model)
     args.output_path.write_bytes(model_bytes)
