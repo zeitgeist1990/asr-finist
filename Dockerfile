@@ -24,15 +24,15 @@ RUN set -ex \
 
 ENV PATH=/venv/bin:$PATH
 
-#RUN set -ex \
+RUN set -ex \
    # && python -m tone download /models
 
-#FROM python:3.10-slim
+FROM python:3.10-slim
 
-#COPY --from=build /venv /venv
-#COPY --from=build /models /models
+COPY --from=build /venv /venv
+# COPY --from=build /models /models
+ENV PATH=/venv/bin:$PATH
 
-#ENV PATH=/venv/bin:$PATH
 # Set env variable LOAD_FROM_FOLDER to load model from a local folder instead of downloading from HuggingFace
 ENV LOAD_FROM_FOLDER=/models
 
